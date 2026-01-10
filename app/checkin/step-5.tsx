@@ -1,26 +1,39 @@
+/**
+ * Check-in Paso 5: Intención del día
+ * Define foco principal + plan de acción opcional
+ */
 import React, { useState } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { router } from 'expo-router';
-import { Screen, Text, Card, Input, Button } from '@/components/ui';
+import { Card, Input, Chip, Text } from '@/components/ui';
+import { WizardStep } from '@/components/checkin/WizardStep';
 import { spacing } from '@/theme/tokens';
 import { useCheckin } from '@/contexts/CheckinContext';
+import { DailyFocus } from '@/lib/checkin-types';
+
+const DAILY_FOCUS_OPTIONS: DailyFocus[] = [
+  'Entrenar',
+  'Recuperar',
+  'Nutrición',
+  'Trabajo/Familia',
+];
 
 export default function CheckinStep5() {
-  const { data, updateData, saveCheckin } = useCheckin();
-  const [note, setNote] = useState(data.note || '');
-  const [tomorrowPlan, setTomorrowPlan] = useState(data.tomorrow_plan || '');
+  const { data, updateData, validateStep, saveCheckin } = useCheckin();
+  const [dailyFocus, setDailyFocus] = useState<DailyFocus | undefined>(data.daily_focus);
+  const [actionPlan, setActionPlan] = useState(data.action_plan || '');
   const [loading, setLoading] = useState(false);
 
   const handleFinish = async () => {
     updateData({
-      note,
-      tomorrow_plan: tomorrowPlan,
+      daily_focus: dailyFocus,
+      action_plan: actionPlan || undefined,
     });
 
     setLoading(true);
     try {
       await saveCheckin();
-      router.push('/checkin/result');
+      router.replace('/checkin/result');
     } catch (error: any) {
       Alert.alert('Error', error.message || 'No se pudo guardar. Intenta de nuevo.');
     } finally {
@@ -28,91 +41,83 @@ export default function CheckinStep5() {
     }
   };
 
-  const handleBack = () => {
-    router.back();
-  };
+  const isValid = validateStep(5, {
+    ...data,
+    daily_focus: dailyFocus,
+  });
 
   return (
-    <Screen>
-      <View style={styles.container}>
-        <Text variant="caption" color="textSecondary" style={styles.step}>
-          Paso 5 de 5
+    <WizardStep
+      config={{
+        step: 5,
+        total: 5,
+        title: 'Intención',
+        canGoBack: true,
+      }}
+      onNext={handleFinish}
+      nextDisabled={!isValid}
+      nextLabel="Finalizar"
+      isLoading={loading}
+    >
+      <Card>
+        <Text variant="caption" color="textSecondary" style={styles.helper}>
+          Define tu prioridad principal para hoy
         </Text>
-        <Text variant="h1" style={styles.header}>
-          Check-in
+
+        <Text variant="body" color="textPrimary" style={styles.label}>
+          ¿En qué vas a enfocarte?
         </Text>
-
-        <Card style={styles.card}>
-          <Text variant="h2" style={styles.cardTitle}>
-            Qué te complicó hoy
-          </Text>
-
-          <Input
-            placeholder="1–2 líneas."
-            value={note}
-            onChangeText={setNote}
-            multiline
-            numberOfLines={3}
-            style={[styles.input, styles.textArea]}
-          />
-        </Card>
-
-        <Card style={styles.card}>
-          <Text variant="h2" style={styles.cardTitle}>
-            Qué harás mejor mañana (opcional)
-          </Text>
-
-          <Input
-            placeholder="Ej: acostarme antes, preparar colación…"
-            value={tomorrowPlan}
-            onChangeText={setTomorrowPlan}
-            multiline
-            numberOfLines={3}
-            style={[styles.input, styles.textArea]}
-          />
-        </Card>
-
-        <View style={styles.buttons}>
-          <Button variant="secondary" onPress={handleBack} style={styles.button}>
-            Volver
-          </Button>
-          <Button onPress={handleFinish} loading={loading} style={styles.button}>
-            Guardar
-          </Button>
+        <View style={styles.chipContainer}>
+          {DAILY_FOCUS_OPTIONS.map((focus) => (
+            <Chip
+              key={focus}
+              label={focus}
+              selected={dailyFocus === focus}
+              onPress={() => setDailyFocus(focus)}
+              style={styles.chip}
+            />
+          ))}
         </View>
-      </View>
-    </Screen>
+
+        <Input
+          label="Plan de acción (opcional)"
+          placeholder="Ej: Entrenar pierna a las 7am, preparar carne para toda la semana"
+          value={actionPlan}
+          onChangeText={setActionPlan}
+          multiline
+          numberOfLines={2}
+          maxLength={100}
+          style={styles.input}
+        />
+
+        <Text variant="caption" color="textSecondary">
+          Máximo 100 caracteres
+        </Text>
+      </Card>
+    </WizardStep>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  helper: {
+    marginBottom: spacing.gap * 1.5,
   },
-  step: {
-    marginBottom: 8,
+  label: {
+    marginBottom: spacing.gap / 2,
   },
-  header: {
-    marginBottom: spacing.gap * 2,
+  chipContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.gap / 2,
+    marginBottom: spacing.gap * 1.5,
   },
-  card: {
-    marginBottom: spacing.gap,
-  },
-  cardTitle: {
-    marginBottom: spacing.gap,
+  chip: {
+    marginRight: spacing.gap / 2,
+    marginBottom: spacing.gap / 2,
   },
   input: {
-    marginBottom: 0,
-  },
-  textArea: {
-    height: 80,
+    marginBottom: spacing.gap / 2,
+    height: 70,
     paddingTop: 12,
-  },
-  buttons: {
-    flexDirection: 'row',
-    gap: spacing.gap,
-  },
-  button: {
-    flex: 1,
   },
 });

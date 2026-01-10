@@ -1,37 +1,15 @@
 import React, { createContext, useContext, useState } from 'react';
-import { DailyCheckin, TrainingType } from '@/lib/types';
+import { DailyCheckin } from '@/lib/types';
+import { DailyCheckinData, NormalizedCheckin } from '@/lib/checkin-types';
+import { normalizeCheckin, validateStep } from '@/lib/checkin-utils';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './AuthContext';
 
-interface CheckinData {
-  date: string;
-  // Step 1
-  sleep_hours?: number;
-  sleep_quality?: number;
-  energy?: number;
-  stress?: number;
-  mood?: number;
-  // Step 2
-  pain_level?: number;
-  pain_area?: string;
-  weight_kg?: number;
-  // Step 3
-  trained?: boolean;
-  training_type?: TrainingType;
-  training_minutes?: number;
-  rpe?: number;
-  // Step 4
-  protein_hit?: boolean;
-  veggies_hit?: boolean;
-  water_hit?: boolean;
-  // Step 5
-  note?: string;
-  tomorrow_plan?: string;
-}
-
 interface CheckinContextType {
-  data: CheckinData;
-  updateData: (newData: Partial<CheckinData>) => void;
+  data: DailyCheckinData;
+  updateData: (newData: Partial<DailyCheckinData>) => void;
+  validateStep: (step: number) => boolean;
+  getNormalized: () => NormalizedCheckin;
   saveCheckin: () => Promise<void>;
 }
 
@@ -39,17 +17,26 @@ const CheckinContext = createContext<CheckinContextType | undefined>(undefined);
 
 export function CheckinProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const [data, setData] = useState<CheckinData>({
+  const [data, setData] = useState<DailyCheckinData>({
     date: new Date().toISOString().split('T')[0],
   });
 
-  const updateData = (newData: Partial<CheckinData>) => {
+  const updateData = (newData: Partial<DailyCheckinData>) => {
     setData(prev => ({ ...prev, ...newData }));
+  };
+
+  const validateCurrentStep = (step: number): boolean => {
+    return validateStep(step, data);
+  };
+
+  const getNormalized = (): NormalizedCheckin => {
+    return normalizeCheckin(data);
   };
 
   const saveCheckin = async () => {
     if (!user) throw new Error('No user found');
 
+    // Guardar solo campos relevantes del nuevo modelo
     const checkin: Omit<DailyCheckin, 'id' | 'created_at'> = {
       user_id: user.id,
       date: data.date,
@@ -57,19 +44,19 @@ export function CheckinProvider({ children }: { children: React.ReactNode }) {
       sleep_quality: data.sleep_quality,
       energy: data.energy,
       stress: data.stress,
-      mood: data.mood,
-      pain_level: data.pain_level,
-      pain_area: data.pain_area,
-      weight_kg: data.weight_kg,
+      mood: undefined, // Ya no lo usamos
+      pain_level: undefined, // Ya no lo usamos
+      pain_area: undefined,
+      weight_kg: undefined,
       trained: data.trained,
       training_type: data.training_type,
       training_minutes: data.training_minutes,
       rpe: data.rpe,
       protein_hit: data.protein_hit,
-      veggies_hit: data.veggies_hit,
-      water_hit: data.water_hit,
-      note: data.note,
-      tomorrow_plan: data.tomorrow_plan,
+      veggies_hit: undefined, // Ya no lo usamos
+      water_hit: undefined,
+      note: data.action_plan, // Mapeamos action_plan a note
+      tomorrow_plan: undefined,
     };
 
     const { error } = await supabase
@@ -80,7 +67,13 @@ export function CheckinProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <CheckinContext.Provider value={{ data, updateData, saveCheckin }}>
+    <CheckinContext.Provider value={{
+      data,
+      updateData,
+      validateStep: validateCurrentStep,
+      getNormalized,
+      saveCheckin
+    }}>
       {children}
     </CheckinContext.Provider>
   );
