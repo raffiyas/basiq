@@ -1,12 +1,19 @@
+/**
+ * Pantalla de resultado del check-in
+ * Muestra feedback determinista basado en la normalización
+ */
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { Screen, Text, Card, Button } from '@/components/ui';
-import { spacing } from '@/theme/tokens';
+import { spacing, colors } from '@/theme/tokens';
 import { useCheckin } from '@/contexts/CheckinContext';
+import { generateFeedback, formatSleepHours } from '@/lib/checkin-utils';
 
 export default function CheckinResult() {
-  const { data } = useCheckin();
+  const { getNormalized } = useCheckin();
+  const normalized = getNormalized();
+  const { summary, recommendation } = generateFeedback(normalized);
 
   const handleGoHome = () => {
     router.replace('/(tabs)');
@@ -16,51 +23,109 @@ export default function CheckinResult() {
     router.replace('/(tabs)/coach');
   };
 
-  // Generate simple summary
-  const summary = `Sueño: ${data.sleep_hours || '—'}h (${data.sleep_quality || '—'}/10)\nEnergía: ${data.energy || '—'}/10 • Estrés: ${data.stress || '—'}/10\n${data.trained ? `Entrené ${data.training_minutes || '—'} min` : 'No entrené'}`;
-
-  // Generate simple recommendation
-  const recommendation = data.sleep_hours && data.sleep_hours < 7
-    ? 'Prioriza dormir más esta noche.'
-    : 'Sigue así. Mantén la consistencia.';
-
-  // Generate useful truth
-  const truth = 'Sin datos, no hay progreso. Registrar es el primer paso.';
+  // Recovery score color
+  const getScoreColor = (score: number) => {
+    if (score >= 75) return colors.success || '#22c55e';
+    if (score >= 50) return colors.primary;
+    return colors.error || '#ef4444';
+  };
 
   return (
     <Screen>
       <View style={styles.container}>
         <Text variant="h1" style={styles.header}>
-          Listo
+          Check-in completo
         </Text>
 
+        {/* Recovery Score */}
+        <Card style={styles.card}>
+          <Text variant="caption" color="textSecondary">
+            Índice de recuperación
+          </Text>
+          <Text
+            variant="h1"
+            style={[styles.score, { color: getScoreColor(normalized.recovery_score) }]}
+          >
+            {normalized.recovery_score}
+          </Text>
+          <Text variant="caption" color="textSecondary">
+            Basado en sueño, energía y estrés
+          </Text>
+        </Card>
+
+        {/* Summary */}
         <Card style={styles.card}>
           <Text variant="h2" style={styles.cardTitle}>
             Resumen
           </Text>
-          <Text variant="body" color="textPrimary">
-            {summary}
-          </Text>
+          <View style={styles.summaryGrid}>
+            <View style={styles.summaryItem}>
+              <Text variant="caption" color="textSecondary">
+                Sueño
+              </Text>
+              <Text variant="body" color="textPrimary">
+                {formatSleepHours(normalized.sleep_hours)} (calidad {normalized.sleep_quality}/10)
+              </Text>
+            </View>
+
+            <View style={styles.summaryItem}>
+              <Text variant="caption" color="textSecondary">
+                Estado
+              </Text>
+              <Text variant="body" color="textPrimary">
+                Energía {normalized.energy}/10 • Estrés {normalized.stress}/10
+              </Text>
+            </View>
+
+            <View style={styles.summaryItem}>
+              <Text variant="caption" color="textSecondary">
+                Entrenamiento
+              </Text>
+              <Text variant="body" color="textPrimary">
+                {normalized.trained
+                  ? `${normalized.training_type} ${normalized.training_minutes ? `(${normalized.training_minutes} min)` : ''}`
+                  : 'Descanso'}
+              </Text>
+            </View>
+
+            <View style={styles.summaryItem}>
+              <Text variant="caption" color="textSecondary">
+                Proteína
+              </Text>
+              <Text variant="body" color="textPrimary">
+                {normalized.protein_hit ? '✓ Cumplida' : '✗ No cumplida'}
+                {normalized.protein_grams ? ` (${normalized.protein_grams}g)` : ''}
+              </Text>
+            </View>
+
+            <View style={styles.summaryItem}>
+              <Text variant="caption" color="textSecondary">
+                Foco
+              </Text>
+              <Text variant="body" color="textPrimary">
+                {normalized.daily_focus}
+              </Text>
+            </View>
+          </View>
+
+          {summary && (
+            <Text variant="caption" color="textSecondary" style={styles.summaryNote}>
+              {summary}
+            </Text>
+          )}
         </Card>
 
+        {/* Recommendation */}
         <Card style={styles.card}>
           <Text variant="h2" style={styles.cardTitle}>
-            Recomendación para mañana
+            Recomendación
           </Text>
           <Text variant="body" color="textPrimary">
             {recommendation}
           </Text>
         </Card>
 
-        <Card style={styles.card}>
-          <Text variant="h2" style={styles.cardTitle}>
-            Verdad útil
-          </Text>
-          <Text variant="body" color="textPrimary">
-            {truth}
-          </Text>
-        </Card>
-
+        {/* Actions */}
         <Button onPress={handleGoHome} style={styles.button}>
           Ir a Hoy
         </Button>
@@ -84,7 +149,23 @@ const styles = StyleSheet.create({
     marginBottom: spacing.gap,
   },
   cardTitle: {
-    marginBottom: spacing.gap / 2,
+    marginBottom: spacing.gap,
+  },
+  score: {
+    fontSize: 56,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginVertical: spacing.gap / 2,
+  },
+  summaryGrid: {
+    gap: spacing.gap,
+  },
+  summaryItem: {
+    gap: 4,
+  },
+  summaryNote: {
+    marginTop: spacing.gap,
+    fontStyle: 'italic',
   },
   button: {
     marginBottom: spacing.gap,

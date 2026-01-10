@@ -1,125 +1,91 @@
+/**
+ * Check-in Paso 1: Sueño
+ * Recolecta horas de sueño + calidad percibida
+ */
 import React, { useState } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { router } from 'expo-router';
-import { Screen, Text, Card, Input, Button } from '@/components/ui';
+import { Card, Input, Text } from '@/components/ui';
+import { WizardStep } from '@/components/checkin/WizardStep';
 import { spacing } from '@/theme/tokens';
 import { useCheckin } from '@/contexts/CheckinContext';
 
 export default function CheckinStep1() {
-  const { data, updateData } = useCheckin();
+  const { data, updateData, validateStep } = useCheckin();
   const [sleepHours, setSleepHours] = useState(data.sleep_hours?.toString() || '');
   const [sleepQuality, setSleepQuality] = useState(data.sleep_quality?.toString() || '');
-  const [energy, setEnergy] = useState(data.energy?.toString() || '');
-  const [stress, setStress] = useState(data.stress?.toString() || '');
-  const [mood, setMood] = useState(data.mood?.toString() || '');
 
   const handleNext = () => {
-    if (!sleepHours || !sleepQuality || !energy || !stress || !mood) {
-      Alert.alert('Error', 'Completa este campo.');
-      return;
-    }
+    const hours = parseFloat(sleepHours);
+    const quality = parseInt(sleepQuality);
 
     updateData({
-      sleep_hours: parseFloat(sleepHours),
-      sleep_quality: parseInt(sleepQuality),
-      energy: parseInt(energy),
-      stress: parseInt(stress),
-      mood: parseInt(mood),
+      sleep_hours: hours,
+      sleep_quality: quality,
     });
 
     router.push('/checkin/step-2');
   };
 
+  const isValid = validateStep(1, {
+    ...data,
+    sleep_hours: parseFloat(sleepHours) || undefined,
+    sleep_quality: parseInt(sleepQuality) || undefined,
+  });
+
   return (
-    <Screen>
-      <View style={styles.container}>
-        <Text variant="caption" color="textSecondary" style={styles.step}>
-          Paso 1 de 5
+    <WizardStep
+      config={{
+        step: 1,
+        total: 5,
+        title: 'Sueño',
+        canGoBack: false,
+      }}
+      onNext={handleNext}
+      nextDisabled={!isValid}
+    >
+      <Card>
+        <Text variant="caption" color="textSecondary" style={styles.helper}>
+          El sueño determina tu capacidad de recuperación y rendimiento
         </Text>
-        <Text variant="h1" style={styles.header}>
-          Check-in
-        </Text>
 
-        <Card style={styles.card}>
-          <Text variant="h2" style={styles.cardTitle}>
-            Sueño
+        <Input
+          label="¿Cuántas horas dormiste?"
+          placeholder="7.5"
+          value={sleepHours}
+          onChangeText={setSleepHours}
+          keyboardType="decimal-pad"
+          style={styles.input}
+        />
+
+        <Input
+          label="Calidad del sueño (1 = pésimo, 10 = perfecto)"
+          placeholder="8"
+          value={sleepQuality}
+          onChangeText={setSleepQuality}
+          keyboardType="number-pad"
+          style={styles.input}
+        />
+
+        {sleepHours && parseFloat(sleepHours) < 7 && (
+          <Text variant="caption" color="textSecondary" style={styles.warning}>
+            Menos de 7h puede afectar tu recuperación
           </Text>
-
-          <Input
-            label="Horas"
-            placeholder="Ej: 7.5"
-            value={sleepHours}
-            onChangeText={setSleepHours}
-            keyboardType="decimal-pad"
-            style={styles.input}
-          />
-
-          <Input
-            label="Calidad (1–10)"
-            placeholder="Ej: 8"
-            value={sleepQuality}
-            onChangeText={setSleepQuality}
-            keyboardType="number-pad"
-            style={styles.input}
-          />
-        </Card>
-
-        <Card style={styles.card}>
-          <Text variant="h2" style={styles.cardTitle}>
-            Estado
-          </Text>
-
-          <Input
-            label="Energía (1–10)"
-            placeholder="Ej: 7"
-            value={energy}
-            onChangeText={setEnergy}
-            keyboardType="number-pad"
-            style={styles.input}
-          />
-
-          <Input
-            label="Estrés (1–10)"
-            placeholder="Ej: 5"
-            value={stress}
-            onChangeText={setStress}
-            keyboardType="number-pad"
-            style={styles.input}
-          />
-
-          <Input
-            label="Ánimo (1–10)"
-            placeholder="Ej: 8"
-            value={mood}
-            onChangeText={setMood}
-            keyboardType="number-pad"
-            style={styles.input}
-          />
-        </Card>
-
-        <Button onPress={handleNext}>Siguiente</Button>
-      </View>
-    </Screen>
+        )}
+      </Card>
+    </WizardStep>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  step: {
-    marginBottom: 8,
-  },
-  header: {
-    marginBottom: spacing.gap * 2,
-  },
-  card: {
-    marginBottom: spacing.gap,
-  },
-  cardTitle: {
-    marginBottom: spacing.gap,
+  helper: {
+    marginBottom: spacing.gap * 1.5,
   },
   input: {
     marginBottom: spacing.gap,
+  },
+  warning: {
+    marginTop: spacing.gap / 2,
+    fontStyle: 'italic',
   },
 });

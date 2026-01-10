@@ -1,104 +1,88 @@
+/**
+ * Check-in Paso 4: Nutrición - Proteína
+ * Único toggle crítico: proteína cumplida
+ */
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { router } from 'expo-router';
-import { Screen, Text, Card, Toggle, Button } from '@/components/ui';
+import { Card, Toggle, Input, Text } from '@/components/ui';
+import { WizardStep } from '@/components/checkin/WizardStep';
 import { spacing } from '@/theme/tokens';
 import { useCheckin } from '@/contexts/CheckinContext';
 
 export default function CheckinStep4() {
-  const { data, updateData } = useCheckin();
-  const [proteinHit, setProteinHit] = useState(data.protein_hit || false);
-  const [veggiesHit, setVeggiesHit] = useState(data.veggies_hit || false);
-  const [waterHit, setWaterHit] = useState(data.water_hit || false);
+  const { data, updateData, validateStep } = useCheckin();
+  const [proteinHit, setProteinHit] = useState(data.protein_hit ?? false);
+  const [proteinGrams, setProteinGrams] = useState(data.protein_grams?.toString() || '');
 
   const handleNext = () => {
     updateData({
       protein_hit: proteinHit,
-      veggies_hit: veggiesHit,
-      water_hit: waterHit,
+      protein_grams: proteinGrams ? parseInt(proteinGrams) : undefined,
     });
 
     router.push('/checkin/step-5');
   };
 
-  const handleBack = () => {
-    router.back();
-  };
+  const isValid = validateStep(4, {
+    ...data,
+    protein_hit: proteinHit,
+  });
 
   return (
-    <Screen>
-      <View style={styles.container}>
-        <Text variant="caption" color="textSecondary" style={styles.step}>
-          Paso 4 de 5
-        </Text>
-        <Text variant="h1" style={styles.header}>
-          Check-in
+    <WizardStep
+      config={{
+        step: 4,
+        total: 5,
+        title: 'Nutrición',
+        canGoBack: true,
+      }}
+      onNext={handleNext}
+      nextDisabled={!isValid}
+    >
+      <Card>
+        <Text variant="caption" color="textSecondary" style={styles.helper}>
+          La proteína es el macro más importante para tu composición corporal
         </Text>
 
-        <Card style={styles.card}>
-          <Text variant="h2" style={styles.cardTitle}>
-            Nutrición
+        <Toggle
+          label="Cumplí mi meta de proteína hoy"
+          value={proteinHit}
+          onValueChange={setProteinHit}
+          style={styles.toggle}
+        />
+
+        <Input
+          label="¿Cuántos gramos aproximadamente? (Opcional)"
+          placeholder="150"
+          value={proteinGrams}
+          onChangeText={setProteinGrams}
+          keyboardType="number-pad"
+          style={styles.input}
+        />
+
+        {!proteinHit && (
+          <Text variant="caption" color="textSecondary" style={styles.warning}>
+            Intenta priorizar proteína mañana. Es difícil compensar después.
           </Text>
-
-          <Toggle
-            label="Proteína cumplida"
-            value={proteinHit}
-            onValueChange={setProteinHit}
-            style={styles.toggle}
-          />
-
-          <Toggle
-            label="Verduras"
-            value={veggiesHit}
-            onValueChange={setVeggiesHit}
-            style={styles.toggle}
-          />
-
-          <Toggle
-            label="Agua"
-            value={waterHit}
-            onValueChange={setWaterHit}
-            style={styles.toggle}
-          />
-        </Card>
-
-        <View style={styles.buttons}>
-          <Button variant="secondary" onPress={handleBack} style={styles.button}>
-            Volver
-          </Button>
-          <Button onPress={handleNext} style={styles.button}>
-            Siguiente
-          </Button>
-        </View>
-      </View>
-    </Screen>
+        )}
+      </Card>
+    </WizardStep>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  step: {
-    marginBottom: 8,
-  },
-  header: {
-    marginBottom: spacing.gap * 2,
-  },
-  card: {
-    marginBottom: spacing.gap,
-  },
-  cardTitle: {
-    marginBottom: spacing.gap,
+  helper: {
+    marginBottom: spacing.gap * 1.5,
   },
   toggle: {
+    marginBottom: spacing.gap * 1.5,
+  },
+  input: {
     marginBottom: spacing.gap,
   },
-  buttons: {
-    flexDirection: 'row',
-    gap: spacing.gap,
-  },
-  button: {
-    flex: 1,
+  warning: {
+    marginTop: spacing.gap / 2,
+    fontStyle: 'italic',
   },
 });
