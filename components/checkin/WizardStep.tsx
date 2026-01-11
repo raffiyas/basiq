@@ -44,7 +44,8 @@ export function WizardStep({
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoid}
       >
-        <View style={styles.container}>
+        {/* Header - Fixed at top */}
+        <View style={styles.header}>
           {/* Progress indicator */}
           <Text variant="caption" color="textSecondary" style={styles.progress}>
             Paso {config.step} de {config.total}
@@ -54,18 +55,21 @@ export function WizardStep({
           <Text variant="h1" style={styles.title}>
             {config.title}
           </Text>
+        </View>
 
-          {/* Content - Scrollable */}
-          <ScrollView
-            style={styles.content}
-            contentContainerStyle={styles.contentContainer}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            {children}
-          </ScrollView>
+        {/* Content - Scrollable */}
+        <ScrollView
+          style={styles.content}
+          contentContainerStyle={styles.contentContainer}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {children}
+        </ScrollView>
 
-          {/* Actions - Fixed at bottom */}
+        {/* Footer - Fixed at bottom */}
+        <View style={styles.footer}>
+          {/* Actions */}
           <View style={styles.actions}>
             {/* Back button (if applicable) */}
             {config.canGoBack && (
@@ -109,8 +113,8 @@ const styles = StyleSheet.create({
   keyboardAvoid: {
     flex: 1,
   },
-  container: {
-    flex: 1,
+  header: {
+    paddingBottom: spacing.gap,
   },
   progress: {
     marginBottom: 8,
@@ -125,10 +129,12 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingBottom: spacing.gap,
   },
+  footer: {
+    paddingTop: spacing.gap,
+  },
   actions: {
     flexDirection: 'row',
     gap: spacing.gap,
-    marginTop: spacing.gap,
   },
   backButton: {
     flex: 1,
