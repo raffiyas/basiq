@@ -42,7 +42,7 @@ export default function CheckinStep4() {
     >
       <Card>
         <Text variant="caption" color="textSecondary" style={styles.helper}>
-          La proteína es el macro más importante para tu composición corporal
+          Proteína insuficiente anula cambios en composición corporal.
         </Text>
 
         <Toggle
@@ -63,7 +63,7 @@ export default function CheckinStep4() {
 
         {!proteinHit && (
           <Text variant="caption" color="textSecondary" style={styles.warning}>
-            Intenta priorizar proteína mañana. Es difícil compensar después.
+            Cumple mañana. Déficit acumulado no se recupera.
           </Text>
         )}
       </Card>

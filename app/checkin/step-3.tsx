@@ -107,7 +107,7 @@ export default function CheckinStep3() {
 
         {!trained && (
           <Text variant="caption" color="textSecondary" style={styles.helperNoTraining}>
-            Sin problema. Los días de descanso también son entrenamiento.
+            Registrado. El descanso es parte del proceso.
           </Text>
         )}
       </Card>

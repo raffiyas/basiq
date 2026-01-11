@@ -46,7 +46,7 @@ export default function CheckinStep1() {
     >
       <Card>
         <Text variant="caption" color="textSecondary" style={styles.helper}>
-          El sueño determina tu capacidad de recuperación y rendimiento
+          Sueño insuficiente limita recuperación y rendimiento.
         </Text>
 
         <Input
@@ -69,7 +69,7 @@ export default function CheckinStep1() {
 
         {sleepHours && parseFloat(sleepHours) < 7 && (
           <Text variant="caption" color="textSecondary" style={styles.warning}>
-            Menos de 7h puede afectar tu recuperación
+            Menos de 7h: recuperación comprometida. Ajusta intensidad.
           </Text>
         )}
       </Card>

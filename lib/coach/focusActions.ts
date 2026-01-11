@@ -2,26 +2,26 @@ import { CoachFlags } from './rules';
 
 export function getFocusActions(flags: CoachFlags, hasCheckedInToday: boolean): string[] {
   if (!hasCheckedInToday) {
-    return ['Haz el check-in para ajustar el plan.'];
+    return ['Haz el check-in para definir el plan de hoy.'];
   }
 
   const actions: string[] = [];
 
   if (flags.fatigue_high) {
-    actions.push('Prioriza dormir 7-8h esta noche.');
+    actions.push('Dormir 7-8h esta noche.');
   }
 
   if (flags.protein_low) {
-    actions.push('Asegura tu proteína diaria hoy.');
+    actions.push('Cumplir meta de proteína hoy.');
   }
 
   if (flags.adherence_low) {
-    actions.push('Mantén la consistencia en tus entrenamientos.');
+    actions.push('Completar mínimo 3 entrenamientos esta semana.');
   }
 
   if (flags.all_good) {
-    return ['Todo en orden. Sigue así.'];
+    return ['Seguir el plan actual sin cambios.'];
   }
 
-  return actions.length > 0 ? actions.slice(0, 3) : ['Continúa con tu rutina.'];
+  return actions.length > 0 ? actions.slice(0, 3) : ['Seguir el plan establecido.'];
 }
