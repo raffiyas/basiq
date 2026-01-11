@@ -91,9 +91,14 @@ export default function HomeScreen() {
 
         {/* Check-in CTA */}
         {!checkin && (
-          <Button onPress={handleCheckin} style={styles.button}>
-            Hacer check-in
-          </Button>
+          <View style={styles.ctaContainer}>
+            <Button onPress={handleCheckin} style={styles.button}>
+              Hacer check-in (2 min)
+            </Button>
+            <Text variant="caption" color="textSecondary" style={styles.ctaMicroCopy}>
+              Esto ajusta tu plan de hoy automáticamente.
+            </Text>
+          </View>
         )}
 
         {/* Coach Card */}
@@ -153,8 +158,17 @@ const styles = StyleSheet.create({
   focusAction: {
     marginBottom: 4,
   },
+  ctaContainer: {
+    marginBottom: spacing.gap * 1.5,
+    marginTop: spacing.gap * 0.5,
+  },
   button: {
-    marginBottom: spacing.gap,
+    marginBottom: spacing.gap * 0.5,
+    height: 56,
+  },
+  ctaMicroCopy: {
+    textAlign: 'center',
+    paddingHorizontal: spacing.cardPadding,
   },
   coachCard: {
     marginBottom: spacing.gap,
