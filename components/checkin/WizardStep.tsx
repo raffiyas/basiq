@@ -41,6 +41,11 @@ export function WizardStep({
     }
   };
 
+  const handleNext = () => {
+    console.log('✅ Next button pressed - touch event received!');
+    onNext();
+  };
+
   // Calculate footer height for content padding
   // Base height (actions + padding) + safe area bottom
   const FOOTER_BASE_HEIGHT = 60; // Approximate button height + internal padding
@@ -51,6 +56,7 @@ export function WizardStep({
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoid}
+        pointerEvents="box-none"
       >
         {/* Header - Fixed at top */}
         <View style={styles.header}>
@@ -79,13 +85,15 @@ export function WizardStep({
         </ScrollView>
 
         {/* Footer - Absolute positioned at bottom */}
-        <View style={[
-          styles.footer,
-          {
-            paddingBottom: insets.bottom + 12,
-            ...__DEV__ && { borderWidth: 2, borderColor: 'red' }
-          }
-        ]}>
+        <View
+          style={[
+            styles.footer,
+            {
+              paddingBottom: insets.bottom + 12,
+            }
+          ]}
+          pointerEvents="auto"
+        >
           {/* Actions */}
           <View style={styles.actions}>
             {/* Back button (if applicable) */}
@@ -112,7 +120,7 @@ export function WizardStep({
 
             {/* Next button */}
             <Button
-              onPress={onNext}
+              onPress={handleNext}
               disabled={nextDisabled}
               loading={isLoading}
               style={config.canGoBack ? styles.nextButton : styles.nextButtonFull}
@@ -153,6 +161,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 12,
     backgroundColor: '#fff', // Ensure footer has background
+    zIndex: 50,
+    elevation: 50,
   },
   actions: {
     flexDirection: 'row',
