@@ -16,7 +16,12 @@ export default function CheckinResult() {
   const { summary, recommendation } = generateFeedback(normalized);
 
   const handleGoHome = () => {
-    router.replace('/(tabs)');
+    // Smart navigation: go back if possible, otherwise go to check-in tab
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)/checkin');
+    }
   };
 
   const handleTalkToCoach = () => {
@@ -127,7 +132,7 @@ export default function CheckinResult() {
 
         {/* Actions */}
         <Button onPress={handleGoHome} style={styles.button}>
-          Ir a Hoy
+          Continuar
         </Button>
 
         <Button variant="secondary" onPress={handleTalkToCoach} style={styles.button}>

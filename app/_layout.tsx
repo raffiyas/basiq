@@ -49,7 +49,7 @@ function RootLayoutNav() {
   useEffect(() => {
     if (loading) return;
 
-    const inAuthGroup = segments[0] === '(tabs)' || segments[0] === 'onboarding';
+    const inAuthGroup = ['(tabs)', 'onboarding', 'checkin', 'settings'].includes(segments[0]);
 
     if (!session && inAuthGroup) {
       // Redirect to login if not authenticated
