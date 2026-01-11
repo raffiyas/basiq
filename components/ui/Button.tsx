@@ -1,5 +1,5 @@
-import React from 'react';
-import { Pressable, StyleSheet, ActivityIndicator, ViewStyle } from 'react-native';
+import React, { useRef } from 'react';
+import { Pressable, StyleSheet, ActivityIndicator, ViewStyle, Animated } from 'react-native';
 import { colors, spacing, radius } from '@/theme/tokens';
 import { Text } from './Text';
 
@@ -24,38 +24,72 @@ export function Button({
   const isSecondary = variant === 'secondary';
   const isGhost = variant === 'ghost';
 
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.97,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 0,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 0,
+    }).start();
+  };
+
+  const handlePress = async () => {
+    try {
+      const haptics = await import('expo-haptics');
+      haptics.impactAsync(haptics.ImpactFeedbackStyle.Light);
+    } catch {
+      // Haptics not available, continue without
+    }
+    onPress();
+  };
+
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled || loading}
-      style={({ pressed }) => [
-        styles.base,
-        isPrimary && styles.primary,
-        isSecondary && styles.secondary,
-        isGhost && styles.ghost,
-        pressed && isPrimary && styles.primaryPressed,
-        pressed && isSecondary && styles.secondaryPressed,
-        pressed && isGhost && styles.ghostPressed,
-        (disabled || loading) && styles.disabled,
-        style,
-      ]}
-    >
-      {loading ? (
-        <ActivityIndicator color={isPrimary ? colors.card : colors.primary} />
-      ) : (
-        <Text
-          variant="body"
-          style={[
-            styles.text,
-            isPrimary && styles.textPrimary,
-            isSecondary && styles.textSecondary,
-            isGhost && styles.textGhost,
-          ]}
-        >
-          {children}
-        </Text>
-      )}
-    </Pressable>
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <Pressable
+        onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        disabled={disabled || loading}
+        style={({ pressed }) => [
+          styles.base,
+          isPrimary && styles.primary,
+          isSecondary && styles.secondary,
+          isGhost && styles.ghost,
+          pressed && isPrimary && styles.primaryPressed,
+          pressed && isSecondary && styles.secondaryPressed,
+          pressed && isGhost && styles.ghostPressed,
+          (disabled || loading) && styles.disabled,
+          style,
+        ]}
+      >
+        {loading ? (
+          <ActivityIndicator color={isPrimary ? colors.card : colors.primary} />
+        ) : (
+          <Text
+            variant="body"
+            style={[
+              styles.text,
+              isPrimary && styles.textPrimary,
+              isSecondary && styles.textSecondary,
+              isGhost && styles.textGhost,
+            ]}
+          >
+            {children}
+          </Text>
+        )}
+      </Pressable>
+    </Animated.View>
   );
 }
 
