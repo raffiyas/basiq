@@ -66,3 +66,99 @@ export function generateCoachReply(
 export function getDefaultCoachTip(): string {
   return 'Registra sueño, entrenamiento y proteína. El resto es ruido.';
 }
+
+/**
+ * Generates a daily coach message after check-in completion.
+ * Format: Summary (1 sentence) + 3 actions + Optional reason.
+ * B1 tone: serious, human, honest, supportive but not indulgent.
+ */
+export function generateDailyCoachMessage(
+  flags: CoachFlags,
+  recentCheckins: DailyCheckin[],
+  todayCheckin: DailyCheckin | null,
+  profile: Profile | null
+): string {
+  const checkinCount = recentCheckins.length;
+  const trainedDays = recentCheckins.filter(c => c.trained).length;
+  const proteinTarget = profile?.protein_target_g || 100;
+
+  let summary = '';
+  const actions: string[] = [];
+  let reason = '';
+
+  // Priority 1: High Fatigue
+  if (flags.fatigue_high) {
+    const lowSleepDays = recentCheckins.filter(c => c.sleep_hours && c.sleep_hours < 6).length;
+    const avgEnergy = recentCheckins.length > 0
+      ? recentCheckins.reduce((sum, c) => sum + (c.energy || 5), 0) / recentCheckins.length
+      : 5;
+
+    summary = lowSleepDays >= 2
+      ? `Has dormido menos de 6 horas en ${lowSleepDays} días esta semana.`
+      : `Tu energía promedio es ${avgEnergy.toFixed(1)}/10 esta semana.`;
+
+    actions.push('Dormir 7-8h esta noche');
+    actions.push('Reducir intensidad de entrenamiento a RPE 5 o menos');
+    actions.push(`Cumplir meta de proteína hoy (${proteinTarget}g)`);
+
+    reason = 'La fatiga acumulada limita tu capacidad de recuperación y rendimiento.';
+  }
+  // Priority 2: Low Adherence
+  else if (flags.adherence_low) {
+    const expectedTrainingDays = profile?.training_days_per_week || 3;
+
+    if (checkinCount < 4) {
+      summary = `Solo has registrado ${checkinCount} check-ins en los últimos 7 días.`;
+    } else {
+      summary = `Has entrenado ${trainedDays} días esta semana, tu meta es ${expectedTrainingDays}.`;
+    }
+
+    actions.push('Hacer check-in diario sin excusas');
+    actions.push(`Completar mínimo ${expectedTrainingDays} entrenamientos esta semana`);
+    actions.push('Planificar las sesiones de entrenamiento con anticipación');
+
+    reason = 'Sin datos consistentes y volumen adecuado no hay progreso.';
+  }
+  // Priority 3: Low Protein
+  else if (flags.protein_low) {
+    const proteinMissedDays = recentCheckins.filter(c => c.protein_hit === false).length;
+
+    summary = `No has cumplido tu meta de proteína en ${proteinMissedDays} días esta semana.`;
+
+    actions.push(`Consumir ${proteinTarget}g de proteína hoy`);
+    actions.push('Preparar 3 comidas con fuente de proteína clara');
+    actions.push('Llevar registro de proteína en cada comida');
+
+    reason = 'Sin proteína adecuada no hay cambios en composición corporal.';
+  }
+  // All Good
+  else if (flags.all_good) {
+    summary = `Has completado ${checkinCount} check-ins y ${trainedDays} entrenamientos esta semana.`;
+
+    actions.push('Mantener el plan actual sin cambios');
+    actions.push('Monitorear nivel de fatiga diariamente');
+    actions.push('Ajustar solo si las condiciones cambian');
+
+    reason = 'El plan está funcionando, la consistencia genera resultados.';
+  }
+  // Fallback (should not happen if flags are computed correctly)
+  else {
+    summary = 'Check-in completado.';
+    actions.push('Seguir el plan establecido');
+    actions.push('Registrar métricas diariamente');
+    actions.push('Mantener adherencia al entrenamiento');
+    reason = '';
+  }
+
+  // Format message
+  let message = summary + '\n\n';
+  actions.slice(0, 3).forEach((action, index) => {
+    message += `${index + 1}. ${action}\n`;
+  });
+
+  if (reason) {
+    message += `\n${reason}`;
+  }
+
+  return message.trim();
+}

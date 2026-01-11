@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useState } from 'react';
-import { DailyCheckin } from '@/lib/types';
+import { DailyCheckin, Profile } from '@/lib/types';
 import { DailyCheckinData, NormalizedCheckin } from '@/lib/checkin-types';
 import { normalizeCheckin, validateStep } from '@/lib/checkin-utils';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './AuthContext';
+import { computeFlags } from '@/lib/coach/rules';
+import { generateDailyCoachMessage } from '@/lib/coach/coachReply';
 
 interface CheckinContextType {
   data: DailyCheckinData;
@@ -64,6 +66,67 @@ export function CheckinProvider({ children }: { children: React.ReactNode }) {
       .upsert(checkin, { onConflict: 'user_id,date' });
 
     if (error) throw error;
+
+    // Generate and save daily coach message
+    try {
+      // Fetch recent check-ins (last 7 days including today)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+      const { data: recentCheckins, error: checkinsError } = await supabase
+        .from('daily_checkins')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('date', sevenDaysAgo.toISOString().split('T')[0])
+        .order('date', { ascending: false });
+
+      if (checkinsError) throw checkinsError;
+
+      // Fetch user profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profile')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profileError && profileError.code !== 'PGRST116') {
+        // Ignore "not found" error, but throw others
+        throw profileError;
+      }
+
+      // Compute flags
+      const todayCheckin = recentCheckins?.find(c => c.date === data.date) || null;
+      const flags = computeFlags(
+        recentCheckins || [],
+        todayCheckin,
+        profile as Profile | null
+      );
+
+      // Generate daily coach message
+      const message = generateDailyCoachMessage(
+        flags,
+        recentCheckins || [],
+        todayCheckin,
+        profile as Profile | null
+      );
+
+      // Save message to coach_messages table
+      const { error: messageError } = await supabase
+        .from('coach_messages')
+        .insert({
+          user_id: user.id,
+          role: 'assistant',
+          content: message,
+        });
+
+      if (messageError) {
+        console.error('Failed to save coach message:', messageError);
+        // Don't throw - we don't want to block check-in if message fails
+      }
+    } catch (coachError) {
+      console.error('Failed to generate coach message:', coachError);
+      // Don't throw - we don't want to block check-in if coach message fails
+    }
   };
 
   return (

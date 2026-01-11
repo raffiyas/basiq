@@ -4,13 +4,14 @@ import { router } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Screen, Text, Card, Button } from '@/components/ui';
 import { colors, spacing } from '@/theme/tokens';
-import { useProfile, useTodayCheckin, useRecentCheckins } from '@/hooks';
+import { useProfile, useTodayCheckin, useRecentCheckins, useLatestCoachMessage } from '@/hooks';
 import { computeFlags, getFocusActions, getDefaultCoachTip } from '@/lib/coach';
 
 export default function HomeScreen() {
   const { profile } = useProfile();
   const { checkin } = useTodayCheckin();
   const { checkins } = useRecentCheckins(7);
+  const { message: coachMessage } = useLatestCoachMessage();
 
   const flags = computeFlags(checkins, checkin, profile);
   const focusActions = getFocusActions(flags, !!checkin);
@@ -82,11 +83,17 @@ export default function HomeScreen() {
           <Text variant="h2" style={styles.cardTitle}>
             Tu foco hoy
           </Text>
-          {focusActions.map((action, index) => (
-            <Text key={index} variant="body" style={styles.focusAction}>
-              • {action}
+          {coachMessage ? (
+            <Text variant="body" style={styles.focusMessage}>
+              {coachMessage.content}
             </Text>
-          ))}
+          ) : (
+            focusActions.map((action, index) => (
+              <Text key={index} variant="body" style={styles.focusAction}>
+                • {action}
+              </Text>
+            ))
+          )}
         </Card>
 
         {/* Check-in CTA */}
@@ -157,6 +164,9 @@ const styles = StyleSheet.create({
   },
   focusAction: {
     marginBottom: 4,
+  },
+  focusMessage: {
+    lineHeight: 22,
   },
   ctaContainer: {
     marginBottom: spacing.gap * 1.5,
