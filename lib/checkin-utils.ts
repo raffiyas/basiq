@@ -150,21 +150,21 @@ export function generateFeedback(checkin: NormalizedCheckin): {
 
   switch (checkin.suggested_action) {
     case 'rest':
-      recommendation = 'Prioriza descanso hoy. Reduce volumen de entrenamiento.';
+      recommendation = 'Descanso obligatorio. Reducir volumen o suspender entrenamiento.';
       break;
     case 'light':
-      recommendation = 'Entrena liviano. Escucha a tu cuerpo.';
+      recommendation = 'Entrenamiento liviano únicamente. RPE máximo 5.';
       break;
     case 'normal':
-      recommendation = 'Sigue el plan. Condiciones normales.';
+      recommendation = 'Seguir el plan establecido. Condiciones estándar.';
       break;
     case 'push':
-      recommendation = 'Buena recuperación. Puedes aumentar intensidad si corresponde.';
+      recommendation = 'Recuperación óptima. Aumentar intensidad si el plan lo permite.';
       break;
   }
 
   if (checkin.sleep_deficit && checkin.recovery_score < 50) {
-    recommendation = 'Duerme más esta noche. Es la prioridad.';
+    recommendation = 'Dormir más esta noche. Prioridad absoluta.';
   }
 
   return { summary, recommendation };

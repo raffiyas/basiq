@@ -44,7 +44,7 @@ export default function CheckinStep2() {
     >
       <Card>
         <Text variant="caption" color="textSecondary" style={styles.helper}>
-          Esto ajusta la intensidad recomendada para hoy
+          Determina la intensidad permitida para hoy.
         </Text>
 
         <ScaleSlider
@@ -65,7 +65,7 @@ export default function CheckinStep2() {
           max={10}
           minLabel="Relajado"
           maxLabel="Muy tenso"
-          helper={stress >= 7 ? 'Considera reducir volumen hoy' : undefined}
+          helper={stress >= 7 ? 'Reducir volumen hoy. Estrés alto.' : undefined}
         />
       </Card>
     </WizardStep>
