@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
 import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Screen, Text, Button, Card } from '@/components/ui';
 import { spacing } from '@/theme/tokens';
 import { WizardStepConfig } from '@/lib/checkin-types';
@@ -30,6 +31,8 @@ export function WizardStep({
   nextLabel = 'Siguiente',
   isLoading = false,
 }: WizardStepProps) {
+  const insets = useSafeAreaInsets();
+
   const handleBack = () => {
     if (onBack) {
       onBack();
@@ -37,6 +40,11 @@ export function WizardStep({
       router.back();
     }
   };
+
+  // Calculate footer height for content padding
+  // Base height (actions + padding) + safe area bottom
+  const FOOTER_BASE_HEIGHT = 60; // Approximate button height + internal padding
+  const footerTotalHeight = FOOTER_BASE_HEIGHT + insets.bottom + 24;
 
   return (
     <Screen scroll={false}>
@@ -60,15 +68,24 @@ export function WizardStep({
         {/* Content - Scrollable */}
         <ScrollView
           style={styles.content}
-          contentContainerStyle={styles.contentContainer}
+          contentContainerStyle={[
+            styles.contentContainer,
+            { paddingBottom: footerTotalHeight }
+          ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
           {children}
         </ScrollView>
 
-        {/* Footer - Fixed at bottom */}
-        <View style={styles.footer}>
+        {/* Footer - Absolute positioned at bottom */}
+        <View style={[
+          styles.footer,
+          {
+            paddingBottom: insets.bottom + 12,
+            ...__DEV__ && { borderWidth: 2, borderColor: 'red' }
+          }
+        ]}>
           {/* Actions */}
           <View style={styles.actions}>
             {/* Back button (if applicable) */}
@@ -127,10 +144,15 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flexGrow: 1,
-    paddingBottom: spacing.gap,
   },
   footer: {
-    paddingTop: spacing.gap,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    backgroundColor: '#fff', // Ensure footer has background
   },
   actions: {
     flexDirection: 'row',
