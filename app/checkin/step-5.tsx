@@ -25,6 +25,13 @@ export default function CheckinStep5() {
   const [loading, setLoading] = useState(false);
 
   const handleFinish = async () => {
+    if (__DEV__) {
+      console.log('[Step5] handleFinish called', {
+        dailyFocus,
+        actionPlan,
+      });
+    }
+
     updateData({
       daily_focus: dailyFocus,
       action_plan: actionPlan || undefined,
@@ -42,9 +49,15 @@ export default function CheckinStep5() {
   };
 
   const isValid = validateStep(5, {
-    ...data,
     daily_focus: dailyFocus,
   });
+
+  if (__DEV__) {
+    console.log('[Step5] Validation check', {
+      dailyFocus,
+      isValid,
+    });
+  }
 
   return (
     <WizardStep

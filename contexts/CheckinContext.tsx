@@ -10,7 +10,7 @@ import { generateDailyCoachMessage } from '@/lib/coach/coachReply';
 interface CheckinContextType {
   data: DailyCheckinData;
   updateData: (newData: Partial<DailyCheckinData>) => void;
-  validateStep: (step: number) => boolean;
+  validateStep: (step: number, dataOverride?: Partial<DailyCheckinData>) => boolean;
   getNormalized: () => NormalizedCheckin;
   saveCheckin: () => Promise<void>;
 }
@@ -27,8 +27,9 @@ export function CheckinProvider({ children }: { children: React.ReactNode }) {
     setData(prev => ({ ...prev, ...newData }));
   };
 
-  const validateCurrentStep = (step: number): boolean => {
-    return validateStep(step, data);
+  const validateCurrentStep = (step: number, dataOverride?: Partial<DailyCheckinData>): boolean => {
+    const mergedData = dataOverride ? { ...data, ...dataOverride } : data;
+    return validateStep(step, mergedData);
   };
 
   const getNormalized = (): NormalizedCheckin => {

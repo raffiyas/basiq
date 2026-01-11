@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, StyleSheet, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, ScrollView, Platform, TouchableOpacity, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { Screen, Text, Button, Card } from '@/components/ui';
 import { spacing } from '@/theme/tokens';
 import { WizardStepConfig } from '@/lib/checkin-types';
@@ -42,8 +43,34 @@ export function WizardStep({
   };
 
   const handleNext = () => {
-    console.log('✅ Next button pressed - touch event received!');
+    if (__DEV__) {
+      console.log('[WizardStep] Next button pressed - touch event received!');
+    }
     onNext();
+  };
+
+  const handleClose = () => {
+    Alert.alert(
+      'Cancelar check-in',
+      '¿Estás seguro que quieres salir? Perderás el progreso.',
+      [
+        {
+          text: 'Continuar check-in',
+          style: 'cancel',
+        },
+        {
+          text: 'Salir',
+          style: 'destructive',
+          onPress: () => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/(tabs)');
+            }
+          },
+        },
+      ]
+    );
   };
 
   // Calculate footer height for content padding
@@ -60,15 +87,28 @@ export function WizardStep({
       >
         {/* Header - Fixed at top */}
         <View style={styles.header}>
-          {/* Progress indicator */}
-          <Text variant="caption" color="textSecondary" style={styles.progress}>
-            Paso {config.step} de {config.total}
-          </Text>
+          <View style={styles.headerContent}>
+            <View style={styles.headerLeft}>
+              {/* Progress indicator */}
+              <Text variant="caption" color="textSecondary" style={styles.progress}>
+                Paso {config.step} de {config.total}
+              </Text>
 
-          {/* Title */}
-          <Text variant="h1" style={styles.title}>
-            {config.title}
-          </Text>
+              {/* Title */}
+              <Text variant="h1" style={styles.title}>
+                {config.title}
+              </Text>
+            </View>
+
+            {/* Close button - Always visible */}
+            <TouchableOpacity
+              onPress={handleClose}
+              style={styles.closeButton}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name="close" size={28} color="#666" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Content - Scrollable */}
@@ -141,11 +181,24 @@ const styles = StyleSheet.create({
   header: {
     paddingBottom: spacing.gap,
   },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  headerLeft: {
+    flex: 1,
+    paddingRight: spacing.gap,
+  },
   progress: {
     marginBottom: 8,
   },
   title: {
     marginBottom: spacing.gap * 2,
+  },
+  closeButton: {
+    marginTop: -4,
+    padding: 4,
   },
   content: {
     flex: 1,

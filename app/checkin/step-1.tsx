@@ -16,8 +16,20 @@ export default function CheckinStep1() {
   const [sleepQuality, setSleepQuality] = useState(data.sleep_quality?.toString() || '');
 
   const handleNext = () => {
-    const hours = parseFloat(sleepHours);
+    // Normalize comma to dot for decimal numbers
+    const normalizedHours = sleepHours.replace(',', '.');
+    const hours = parseFloat(normalizedHours);
     const quality = parseInt(sleepQuality);
+
+    if (__DEV__) {
+      console.log('[Step1] handleNext called', {
+        sleepHours_raw: sleepHours,
+        sleepHours_normalized: normalizedHours,
+        sleepHours_parsed: hours,
+        sleepQuality_raw: sleepQuality,
+        sleepQuality_parsed: quality,
+      });
+    }
 
     updateData({
       sleep_hours: hours,
@@ -27,11 +39,27 @@ export default function CheckinStep1() {
     router.push('/checkin/step-2');
   };
 
+  // Parse values with proper normalization
+  const normalizedHours = sleepHours.replace(',', '.');
+  const parsedHours = parseFloat(normalizedHours);
+  const parsedQuality = parseInt(sleepQuality);
+
   const isValid = validateStep(1, {
-    ...data,
-    sleep_hours: parseFloat(sleepHours) || undefined,
-    sleep_quality: parseInt(sleepQuality) || undefined,
+    sleep_hours: Number.isFinite(parsedHours) ? parsedHours : undefined,
+    sleep_quality: Number.isFinite(parsedQuality) ? parsedQuality : undefined,
   });
+
+  if (__DEV__) {
+    console.log('[Step1] Validation check', {
+      sleepHours_raw: sleepHours,
+      sleepHours_parsed: parsedHours,
+      sleepHours_isFinite: Number.isFinite(parsedHours),
+      sleepQuality_raw: sleepQuality,
+      sleepQuality_parsed: parsedQuality,
+      sleepQuality_isFinite: Number.isFinite(parsedQuality),
+      isValid,
+    });
+  }
 
   return (
     <WizardStep

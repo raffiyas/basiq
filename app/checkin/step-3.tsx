@@ -21,21 +21,42 @@ export default function CheckinStep3() {
   const [rpe, setRpe] = useState(data.rpe?.toString() || '');
 
   const handleNext = () => {
+    const parsedMinutes = minutes ? parseInt(minutes) : undefined;
+    const parsedRpe = rpe ? parseInt(rpe) : undefined;
+
+    if (__DEV__) {
+      console.log('[Step3] handleNext called', {
+        trained,
+        trainingType,
+        minutes_raw: minutes,
+        minutes_parsed: parsedMinutes,
+        rpe_raw: rpe,
+        rpe_parsed: parsedRpe,
+      });
+    }
+
     updateData({
       trained,
       training_type: trained ? trainingType : undefined,
-      training_minutes: trained && minutes ? parseInt(minutes) : undefined,
-      rpe: trained && rpe ? parseInt(rpe) : undefined,
+      training_minutes: trained && parsedMinutes ? parsedMinutes : undefined,
+      rpe: trained && parsedRpe ? parsedRpe : undefined,
     });
 
     router.push('/checkin/step-4');
   };
 
   const isValid = validateStep(3, {
-    ...data,
     trained,
     training_type: trained ? trainingType : undefined,
   });
+
+  if (__DEV__) {
+    console.log('[Step3] Validation check', {
+      trained,
+      trainingType,
+      isValid,
+    });
+  }
 
   return (
     <WizardStep
