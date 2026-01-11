@@ -46,11 +46,31 @@ export default function CoachScreen() {
       return;
     }
 
-    const displayMessages: DisplayMessage[] = data.map(msg => ({
-      role: msg.role as 'user' | 'assistant',
-      content: msg.role === 'assistant' ? JSON.parse(msg.content) : msg.content,
-      timestamp: new Date(msg.created_at!),
-    }));
+    if (!data) return;
+
+    const displayMessages: DisplayMessage[] = data.map(msg => {
+      let content: string | CoachReply = msg.content;
+
+      if (msg.role === 'assistant') {
+        try {
+          content = JSON.parse(msg.content);
+        } catch (parseError) {
+          console.error('Error parsing coach message:', parseError);
+          content = {
+            hechos: 'Error al cargar mensaje',
+            interpretacion: '',
+            accion: '',
+            limite: msg.content || '',
+          };
+        }
+      }
+
+      return {
+        role: msg.role as 'user' | 'assistant',
+        content,
+        timestamp: new Date(msg.created_at!),
+      };
+    });
 
     setMessages(displayMessages);
   };
