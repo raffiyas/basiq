@@ -16,18 +16,34 @@ export default function CheckinStep4() {
   const [proteinGrams, setProteinGrams] = useState(data.protein_grams?.toString() || '');
 
   const handleNext = () => {
+    const parsedGrams = proteinGrams ? parseInt(proteinGrams) : undefined;
+
+    if (__DEV__) {
+      console.log('[Step4] handleNext called', {
+        proteinHit,
+        proteinGrams_raw: proteinGrams,
+        proteinGrams_parsed: parsedGrams,
+      });
+    }
+
     updateData({
       protein_hit: proteinHit,
-      protein_grams: proteinGrams ? parseInt(proteinGrams) : undefined,
+      protein_grams: parsedGrams,
     });
 
     router.push('/checkin/step-5');
   };
 
   const isValid = validateStep(4, {
-    ...data,
     protein_hit: proteinHit,
   });
+
+  if (__DEV__) {
+    console.log('[Step4] Validation check', {
+      proteinHit,
+      isValid,
+    });
+  }
 
   return (
     <WizardStep

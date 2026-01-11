@@ -17,6 +17,13 @@ export default function CheckinStep2() {
   const [stress, setStress] = useState(data.stress ?? 5);
 
   const handleNext = () => {
+    if (__DEV__) {
+      console.log('[Step2] handleNext called', {
+        energy,
+        stress,
+      });
+    }
+
     updateData({
       energy,
       stress,
@@ -26,10 +33,17 @@ export default function CheckinStep2() {
   };
 
   const isValid = validateStep(2, {
-    ...data,
     energy,
     stress,
   });
+
+  if (__DEV__) {
+    console.log('[Step2] Validation check', {
+      energy,
+      stress,
+      isValid,
+    });
+  }
 
   return (
     <WizardStep
