@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { Screen, Text, Button, Card } from '@/components/ui';
 import { spacing } from '@/theme/tokens';
@@ -39,63 +39,76 @@ export function WizardStep({
   };
 
   return (
-    <Screen>
-      <View style={styles.container}>
-        {/* Progress indicator */}
-        <Text variant="caption" color="textSecondary" style={styles.progress}>
-          Paso {config.step} de {config.total}
-        </Text>
+    <Screen scroll={false}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoid}
+      >
+        <View style={styles.container}>
+          {/* Progress indicator */}
+          <Text variant="caption" color="textSecondary" style={styles.progress}>
+            Paso {config.step} de {config.total}
+          </Text>
 
-        {/* Title */}
-        <Text variant="h1" style={styles.title}>
-          {config.title}
-        </Text>
+          {/* Title */}
+          <Text variant="h1" style={styles.title}>
+            {config.title}
+          </Text>
 
-        {/* Content */}
-        <View style={styles.content}>
-          {children}
-        </View>
-
-        {/* Actions */}
-        <View style={styles.actions}>
-          {/* Back button (if applicable) */}
-          {config.canGoBack && (
-            <Button
-              variant="secondary"
-              onPress={handleBack}
-              style={styles.backButton}
-            >
-              Volver
-            </Button>
-          )}
-
-          {/* Skip button (if applicable) */}
-          {config.canSkip && onSkip && (
-            <Button
-              variant="ghost"
-              onPress={onSkip}
-              style={styles.skipButton}
-            >
-              {config.skipLabel || 'Omitir'}
-            </Button>
-          )}
-
-          {/* Next button */}
-          <Button
-            onPress={onNext}
-            disabled={nextDisabled}
-            loading={isLoading}
-            style={config.canGoBack ? styles.nextButton : styles.nextButtonFull}
+          {/* Content - Scrollable */}
+          <ScrollView
+            style={styles.content}
+            contentContainerStyle={styles.contentContainer}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
-            {nextLabel}
-          </Button>
+            {children}
+          </ScrollView>
+
+          {/* Actions - Fixed at bottom */}
+          <View style={styles.actions}>
+            {/* Back button (if applicable) */}
+            {config.canGoBack && (
+              <Button
+                variant="secondary"
+                onPress={handleBack}
+                style={styles.backButton}
+              >
+                Volver
+              </Button>
+            )}
+
+            {/* Skip button (if applicable) */}
+            {config.canSkip && onSkip && (
+              <Button
+                variant="ghost"
+                onPress={onSkip}
+                style={styles.skipButton}
+              >
+                {config.skipLabel || 'Omitir'}
+              </Button>
+            )}
+
+            {/* Next button */}
+            <Button
+              onPress={onNext}
+              disabled={nextDisabled}
+              loading={isLoading}
+              style={config.canGoBack ? styles.nextButton : styles.nextButtonFull}
+            >
+              {nextLabel}
+            </Button>
+          </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  keyboardAvoid: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },
@@ -107,6 +120,10 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  contentContainer: {
+    flexGrow: 1,
+    paddingBottom: spacing.gap,
   },
   actions: {
     flexDirection: 'row',
