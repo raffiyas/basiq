@@ -16,12 +16,7 @@ export default function CheckinResult() {
   const { summary, recommendation } = generateFeedback(normalized);
 
   const handleGoHome = () => {
-    // Smart navigation: go back if possible, otherwise go to check-in tab
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace('/(tabs)/checkin');
-    }
+    router.replace('/(tabs)');
   };
 
   const handleTalkToCoach = () => {
@@ -161,6 +156,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
     marginVertical: spacing.gap / 2,
+    lineHeight: 68,
   },
   summaryGrid: {
     gap: spacing.gap,
