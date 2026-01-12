@@ -84,9 +84,29 @@ export default function HomeScreen() {
             Tu foco hoy
           </Text>
           {coachMessage ? (
-            <Text variant="body" style={styles.focusMessage}>
-              {coachMessage.content}
-            </Text>
+            (() => {
+              try {
+                const parsed = JSON.parse(coachMessage.content);
+                return (
+                  <>
+                    <Text variant="body" style={styles.focusMessage}>
+                      {parsed.hechos}
+                    </Text>
+                    {parsed.accion && (
+                      <Text variant="body" style={styles.focusAction}>
+                        • {parsed.accion}
+                      </Text>
+                    )}
+                  </>
+                );
+              } catch {
+                return (
+                  <Text variant="body" style={styles.focusMessage}>
+                    {coachMessage.content}
+                  </Text>
+                );
+              }
+            })()
           ) : (
             focusActions.map((action, index) => (
               <Text key={index} variant="body" style={styles.focusAction}>
