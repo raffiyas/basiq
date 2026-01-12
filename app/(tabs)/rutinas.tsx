@@ -31,6 +31,7 @@ export default function RutinasScreen() {
   const [expandedExercise, setExpandedExercise] = useState<string | null>(null);
   const [completedExercises, setCompletedExercises] = useState<Set<string>>(new Set());
   const [completing, setCompleting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const today = new Date();
   const dayOfWeek = today.getDay();
@@ -49,7 +50,23 @@ export default function RutinasScreen() {
 
   // Generar rutina cuando cambia el perfil o check-in
   useEffect(() => {
-    if (!profile) return;
+    if (!profile) {
+      console.log('[Rutinas] No profile yet');
+      setIsGenerating(false);
+      return;
+    }
+
+    console.log('[Rutinas] Generating routine with:', {
+      goal: profile.goal,
+      activity_level: profile.activity_level,
+      training_days_per_week: profile.training_days_per_week,
+      training_location: profile.training_location,
+      session_duration_min: profile.session_duration_min,
+      recovery_score: recoveryScore,
+      day_of_week: dayOfWeek,
+    });
+
+    setIsGenerating(true);
 
     const generatedRoutine = generateDailyRoutine({
       user_profile: {
@@ -65,7 +82,9 @@ export default function RutinasScreen() {
       recent_workouts: [],
     });
 
+    console.log('[Rutinas] Generated routine:', generatedRoutine);
     setRoutine(generatedRoutine);
+    setIsGenerating(false);
   }, [profile, checkin, dayOfWeek, recoveryScore]);
 
   const toggleExercise = (exerciseId: string) => {
@@ -140,6 +159,13 @@ export default function RutinasScreen() {
   if (!routine && profile) {
     const restDay = isRestDay(profile.training_days_per_week || 3, dayOfWeek);
 
+    console.log('[Rutinas] No routine generated, checking if rest day:', {
+      restDay,
+      training_days_per_week: profile.training_days_per_week,
+      dayOfWeek,
+      dayName,
+    });
+
     if (restDay) {
       return (
         <Screen>
@@ -213,6 +239,47 @@ export default function RutinasScreen() {
 
   // Vista de rutina
   if (!routine) {
+    console.log('[Rutinas] Showing loading state - routine is null but not rest day');
+    console.log('[Rutinas] Debug info:', {
+      hasProfile: !!profile,
+      hasCheckin: !!checkin,
+      recoveryScore,
+      dayOfWeek,
+      dayName,
+      isGenerating,
+    });
+
+    // Si ya terminó de generar pero la rutina es null y no es día de descanso,
+    // es un posible bug en generateDailyRoutine
+    if (!isGenerating && profile) {
+      const restDay = isRestDay(profile.training_days_per_week || 3, dayOfWeek);
+      console.log('[Rutinas] ERROR: Routine is null after generation completed, restDay:', restDay);
+
+      return (
+        <Screen>
+          <View style={styles.container}>
+            <Text variant="h1" style={styles.header}>
+              Rutinas
+            </Text>
+            <Card style={styles.noCheckinCard}>
+              <Ionicons name="alert-circle" size={48} color={colors.warning} style={styles.restIcon} />
+              <Text variant="h2" style={styles.restTitle}>
+                Error generando rutina
+              </Text>
+              <Text variant="body" color="textSecondary" style={styles.restText}>
+                No se pudo generar la rutina para hoy. Por favor verifica tu perfil o contacta soporte.
+              </Text>
+              {__DEV__ && (
+                <Text variant="caption" color="textSecondary" style={styles.restText}>
+                  Debug: RestDay: {restDay ? 'Sí' : 'No'}, Day: {dayOfWeek} ({dayName}), TrainingDays: {profile.training_days_per_week || 3}
+                </Text>
+              )}
+            </Card>
+          </View>
+        </Screen>
+      );
+    }
+
     return (
       <Screen>
         <View style={styles.container}>
@@ -223,6 +290,11 @@ export default function RutinasScreen() {
             <Text variant="body" color="textSecondary">
               Cargando rutina...
             </Text>
+            {__DEV__ && (
+              <Text variant="caption" color="textSecondary" style={{ marginTop: 8 }}>
+                Debug: Profile: {profile ? '✓' : '✗'}, Checkin: {checkin ? '✓' : '✗'}, Recovery: {recoveryScore}, Day: {dayOfWeek}, Generating: {isGenerating ? 'Sí' : 'No'}
+              </Text>
+            )}
           </Card>
         </View>
       </Screen>
